@@ -73,3 +73,17 @@
 		</table>
 	</div>
 </template>
+
+<style scoped>
+.TableBox {
+	background-color: #EEE;
+	padding: 10px;
+}
+.TableBox table {
+	width: 100%;
+	border-collapse: collapse;
+}
+.TableBox tr:nth-child(odd) {
+	background-color: #00000020;
+}
+</style>
