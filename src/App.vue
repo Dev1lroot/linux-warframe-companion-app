@@ -1,6 +1,6 @@
 <script setup>
 
-import { reactive } from 'vue'
+import { reactive, provide } from 'vue'
 
 var WorldState = reactive({
     VoidTraders: [],
@@ -44,6 +44,21 @@ var Navigation = reactive({
 	]
 });
 
+const RateVoidFissure = (storm) => {
+    let score = 0;
+    
+    if (storm.MissionName === 'Survival') score += 50;
+    if (storm.FissureCode === 'VoidT6') score += 100;
+	if(storm.FactionName === 'Infested') score += 30;
+	else if(storm.FactionName === 'Grineer') score += 10;
+	if(['Capture','Defense'].includes(storm.MissionName)) score += 20;
+	if(['Sabotage','Spy','Disruption','Interception'].includes(storm.MissionName)) score -= 50;
+
+    return Math.min(Math.max(score, -100), 100);
+};
+
+provide('RateVoidFissure', RateVoidFissure);
+
 import VoidStorms from './components/VoidStorms.vue'
 import VoidFissures from './components/VoidFissures.vue'
 
@@ -54,18 +69,9 @@ import VoidFissures from './components/VoidFissures.vue'
 		<a v-for="option in Navigation.MenuOptions" @click="Navigation.CurrentMenuOption = option.value">{{ option.title }}</a>
 	</nav>
 	<div class="page" v-if="Navigation.CurrentMenuOption === 'VoidFissures'">
-		<div>
-			<h2>Void Storms (Railjack)</h2>
-			<VoidStorms :WorldState="WorldState" :Locale="Locale" />
-		</div>
-		<div>
-			<h2>Void Fissures</h2>
-			<VoidFissures :WorldState="WorldState" :Locale="Locale" :IsSteelPath="false" />
-		</div>
-		<div>
-			<h2>Void Fissures (The Steel Path)</h2>
-			<VoidFissures :WorldState="WorldState" :Locale="Locale" :IsSteelPath="true" />
-		</div>
+		<VoidStorms :Title="'Void Storms (Railjack)'" :WorldState="WorldState" :Locale="Locale" />
+		<VoidFissures :Title="'Void Fissures'" :WorldState="WorldState" :Locale="Locale" :IsSteelPath="false" />
+		<VoidFissures :Title="'Void Fissures (The Steel Path)'" :WorldState="WorldState" :Locale="Locale" :IsSteelPath="true" />
 	</div>
 </template>
 
@@ -75,6 +81,14 @@ import VoidFissures from './components/VoidFissures.vue'
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
+	color: #FFF;
+}
+.WarframeCompanion{
+	width: calc(100vw - 80px);
+	margin: 0px auto;
+}
+body{
+	background-color: #222;
 }
 nav{
 	display: flex;
@@ -88,9 +102,20 @@ nav a:hover{
 	background-color: #00000020;
 }
 .page{
-	display: flex;
+	width: 100%;
 }
 .page > div{
 	width: 100%;
+}
+
+
+.VoidFissureGridBox{
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 10px;
+}
+.VoidFissureTitle{
+	margin-top: 20px;
+	margin-bottom: 10px;
 }
 </style>

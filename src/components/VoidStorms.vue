@@ -1,89 +1,39 @@
 <script setup>
-	import { ref, onMounted, onUnmounted } from 'vue'
+	import { ref, computed, onMounted, onUnmounted } from 'vue'
+	import VoidFissureCard from './VoidFissureCard.vue'
 
 	const props = defineProps({
 		WorldState: Object,
-		Locale: Object
+		Locale: Object,
+		IsSteelPath: Boolean,
+		Title: String
 	});
 
 	const now = ref(Date.now());
 	let timer = null;
 
-	onMounted(() =>
+	const filteredMissions = computed(() =>
 	{
-		timer = setInterval(() =>
+		if (!props.WorldState?.VoidStorms) return [];
+		
+		return props.WorldState.VoidStorms.filter(storm =>
 		{
-			now.value = Date.now();
-		}, 1000);
+			const isHard = !!storm?.Hard;
+			
+			storm.Location = props.Locale.solNodes?.[storm.Node]?.value || storm.Node;
+			storm.FactionName = props.Locale.solNodes?.[storm.Node]?.enemy || 'Unknown';
+			storm.MissionName = props.Locale.solNodes?.[storm.Node]?.type || 'Unknown';
+			storm.FissureName = props.Locale.fissureModifiers?.[storm.ActiveMissionTier]?.value || storm.ActiveMissionTier;
+			storm.FissureCode = storm.ActiveMissionTier;
+			
+			return props.IsSteelPath ? isHard : !isHard;
+		});
 	});
-
-	onUnmounted(() =>
-	{
-		clearInterval(timer);
-	});
-
-	function getMissionTimeStatus(missionData)
-	{
-		const startTime = parseInt(missionData.Activation.$date.$numberLong);
-		const endTime = parseInt(missionData.Expiry.$date.$numberLong);
-
-		const formatDiff = (ms) =>
-		{
-			if (ms < 0) ms = 0;
-			const totalSeconds = Math.floor(ms / 1000);
-			const minutes = Math.floor(totalSeconds / 60);
-			const seconds = totalSeconds % 60;
-			return `${minutes}m ${seconds}s`;
-		};
-
-		if (now.value < startTime)
-		{
-			return `Begin after ${formatDiff(startTime - now.value)}`;
-		}
-		else if (now.value < endTime)
-		{
-			return `Ends in ${formatDiff(endTime - now.value)}`;
-		}
-		else
-		{
-			return "Mission ended";
-		}
-	}
 </script>
 
 <template>
-	<div class="TableBox">
-		<table>
-			<tbody>
-				<tr>
-					<td><b>Location:</b></td>
-					<td><b>Faction:</b></td>
-					<td><b>Mission:</b></td>
-					<td><b>Fissure:</b></td>
-					<td><b>Time:</b></td>
-				</tr>
-				<tr v-for="storm in WorldState.VoidStorms" :key="storm.Node">
-					<td>{{ Locale.solNodes[storm.Node].value }}</td>
-					<td>{{ Locale.solNodes[storm.Node].enemy }}</td>
-					<td>{{ Locale.solNodes[storm.Node].type }}</td>
-					<td>{{ Locale.fissureModifiers[storm.ActiveMissionTier].value }}</td>
-					<td>{{ getMissionTimeStatus(storm) }}</td>
-				</tr>
-			</tbody>
-		</table>
+	<h2 class="VoidFissureTitle">{{ Title }}</h2>
+	<div class="VoidFissureGridBox">
+		<VoidFissureCard v-for="storm in filteredMissions" :key="storm._id.$oid" :MissionData="storm" :Locale="Locale" />
 	</div>
 </template>
-
-<style scoped>
-.TableBox {
-	background-color: #EEE;
-	padding: 10px;
-}
-.TableBox table {
-	width: 100%;
-	border-collapse: collapse;
-}
-.TableBox tr:nth-child(odd) {
-	background-color: #00000020;
-}
-</style>
