@@ -260,7 +260,7 @@ const toggleFissure = fissure => {
 <style scoped>
 .VoidFissureGridBox{
 	display: grid;
-	grid-template-columns: repeat(5, 1fr);
+	grid-template-columns: repeat(auto-fill, minmax(335px, 1fr));
 	gap: 10px;
 }
 .VoidFissureTitle{
@@ -313,25 +313,58 @@ const toggleFissure = fissure => {
     width: auto;
 }
 .ControlPanel .Popup{
-    display: none;
+    display: block;
+    pointer-events: none;
+    opacity: 0;
+    position: absolute;
+    top: 50px;
+    right: 0px;
+    width: 200px;
+    border: 1px solid #555;
+    z-index: 1000;
+    box-shadow: 0px 0px 0px #00000001;
+    transition: all 0.3s;
+}
+.ControlPanel > nav{
+    display: flex;
 }
 .ControlPanel > nav > div{
     position: relative;
 }
+.ControlPanel > nav > div{
+    cursor: pointer;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px;
+}
+.ControlPanel > nav > div > a{
+    font-size: 26px;
+    cursor: pointer;
+}
+.ControlPanel > nav > div:hover > a{
+    border-bottom: 4px solid orange;
+    color: orange;
+}
 .ControlPanel > nav > div:hover .Popup{
     display: block;
+    pointer-events: all;
     background-color: #222;
-    position: absolute;
-    top: 32px;
-    right: 0px;
-    width: 200px;
-    border: 1px solid #555;
-    z-index: 100;
+    opacity: 1;
+    top: 80px;
+    box-shadow: 0px 0px 24px #00000040;
+    transition: all 0.3s;
 }
 .Popup a{
     display: block;
     width: 100%;
     border-left: 3px solid transparent;
+    font-size: 20px;
+    cursor: pointer;
+}
+.Popup a:hover{
+    background-color: #FFFFFF10;
 }
 .Popup a.selected{
     border-left: 3px solid orange;

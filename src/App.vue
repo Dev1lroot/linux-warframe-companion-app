@@ -1,13 +1,16 @@
 <script setup>
 
 import { reactive, provide, computed } from 'vue'
+import { Icon } from '@iconify/vue'
 
 var WorldState = reactive({
     VoidTraders: [],
     SyndicateMissions: [],
     VoidStorms: [],
     ActiveMissions: [],
-	SyndicateMissions: []
+	SyndicateMissions: [],
+	VoidTraders: [],
+	Tmp: ""
 });
 var Locale = reactive({
 	solNodes: {},
@@ -40,33 +43,50 @@ fetch('/api/json/missionTypes.json').then(res => res.json()).then(data => {
 });
 
 var Navigation = reactive({
-	CurrentMenuOption: 'VoidFissures',
+	CurrentMenuOption: 'Main',
 	MenuOptions: [
 		{
 			title: 'Void Fissures',
-			value: 'VoidFissures'
+			value: 'VoidFissures',
+			icon: 'mdi:fire'
 		},
 		{
 			title: 'World State',
-			value: 'WorldState'
+			value: 'WorldState',
+			icon: 'mdi:clock'
 		},
 	]
 });
 
 import CetusClock from './components/CetusClock.vue'
 import VoidFissurePage from './components/VoidFissurePage.vue'
+import VenusClock from './components/VenusClock.vue';
+import DeimosClock from './components/DeimosClock.vue';
+import VoidTraderClock from './components/VoidTraderClock.vue';
 
 </script>
 
 <template>
-	<nav>
-		<a v-for="option in Navigation.MenuOptions" @click="Navigation.CurrentMenuOption = option.value">{{ option.title }}</a>
-	</nav>
+	<div class="page" v-if="Navigation.CurrentMenuOption == 'Main'">
+		<a class="WaybackMenu"><Icon icon="mdi:home" width="32" height="32" /> Home</a>
+		<div class="MainMenu">
+			<a v-for="option in Navigation.MenuOptions" @click="Navigation.CurrentMenuOption = option.value">
+				<Icon :icon="option.icon" width="64" height="64"/>
+				{{ option.title }}
+			</a>
+		</div>
+	</div>
+	<div class="page" v-if="Navigation.CurrentMenuOption != 'Main'">
+		<a class="WaybackMenu" @click="Navigation.CurrentMenuOption = 'Main'"><Icon icon="mdi:arrow-left-circle" width="32" height="32" />Back</a>
+	</div>
 	<div class="page" v-if="Navigation.CurrentMenuOption === 'VoidFissures'">
 		<VoidFissurePage :WorldState="WorldState" :Locale="Locale"/>
 	</div>
-	<div class="page" v-if="Navigation.CurrentMenuOption === 'WorldState'">
+	<div class="page" v-if="Navigation.CurrentMenuOption === 'WorldState'" style="display: flex; gap: 10px;">
 		<CetusClock :WorldState="WorldState"/>
+		<VenusClock :WorldState="WorldState"/>
+		<DeimosClock :WorldState="WorldState"/>
+		<VoidTraderClock :WorldState="WorldState" :Locale="Locale"/>
 	</div>
 </template>
 
@@ -78,6 +98,20 @@ import VoidFissurePage from './components/VoidFissurePage.vue'
 	box-sizing: border-box;
 	color: #FFF;
 }
+.WaybackMenu{
+	display: flex;
+	align-items: center;
+	height: 80px;
+	cursor: pointer;
+	font-size: 26px;
+	opacity: 0.6;
+}
+.WaybackMenu:hover{
+	opacity: 1;
+}
+.WaybackMenu svg{
+	margin-right: 10px;
+}
 .WarframeCompanion{
 	width: calc(100vw - 80px);
 	margin: 0px auto;
@@ -86,16 +120,25 @@ import VoidFissurePage from './components/VoidFissurePage.vue'
 body{
 	background-color: #222;
 }
-nav{
-	display: flex;
+.MainMenu{
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+	gap: 10px;
 }
-nav a{
+.MainMenu a{
 	cursor: pointer;
-	display: block;
-	padding: 10px;
+	border: 2px solid transparent;
+	background-color: #FFFFFF10;
+	border-radius: 10px;
+	aspect-ratio: 1 / 1;
+	text-align: center;
 }
-nav a:hover{
-	background-color: #00000020;
+.MainMenu a svg{
+	width: 100%;
+	margin-top: 16px;
+}
+.MainMenu a:hover{
+	background-color: #FFFFFF20;
 }
 .page{
 	width: 100%;
