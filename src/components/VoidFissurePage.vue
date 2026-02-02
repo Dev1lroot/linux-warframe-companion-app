@@ -238,6 +238,7 @@ const toggleFissure = fissure => {
             <tbody>
                 <tr>
                     <td>Location</td>
+                    <td>Section</td>
                     <td>Faction</td>
                     <td>Mission</td>
                     <td>Fissure</td>
@@ -245,6 +246,7 @@ const toggleFissure = fissure => {
                 </tr>
                 <tr v-for="m in FilteredComputedVoidFissures">
                     <td>{{ m.Location }}</td>
+                    <td>{{ m.FissureType }}</td>
                     <td>{{ m.FactionName }}</td>
                     <td>{{ m.MissionName }}</td>
                     <td>{{ m.FissureName }}</td>
