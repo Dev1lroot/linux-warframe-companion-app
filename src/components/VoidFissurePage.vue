@@ -2,6 +2,7 @@
 import { computed, reactive } from 'vue'
 import VoidFissureCard from './VoidFissureCard.vue'
 import VoidFissureData from './VoidFissureData.vue'
+import VoidFissureClock from './VoidFissureClock.vue'
 
 const props = defineProps({
     WorldState: Object,
@@ -51,8 +52,21 @@ const ComputedVoidFissures = computed(() => [
 /* ---------- UI state ---------- */
 
 const Display = reactive({
-    Mode: 'table',
-    Modes: ['cards', 'table'],
+    Mode: 'cards',
+    Modes: [
+        {
+            title: "Cards",
+            value: "cards",
+        },
+        {
+            title: "Matrix",
+            value: "matrix"
+        },
+        {
+            title: "Table",
+            value: "table"
+        }
+    ],
     SelectedMissions: [],
     SelectedFissures: [],
 })
@@ -140,16 +154,17 @@ const toggleFissure = fissure => {
                     <a
                         v-for="option in Display.Modes"
                         :key="option"
-                        @click="Display.Mode = option"
-                        :class="{ selected: (Display.Mode == option)}"
+                        @click="Display.Mode = option.value"
+                        :class="{ selected: (Display.Mode == option.value)}"
                     >
-                        {{ option }}
+                        {{ option.title }}
                     </a>
                 </div>
             </div>
             <div>
-                <a>Missions</a>
+                <a>Missions <span v-if="Display.SelectedMissions.length > 0">({{ Display.SelectedMissions.length }})</span></a>
                 <div class="Popup">
+                    <a @click="Display.SelectedMissions = []">All</a>
                     <a
                         v-for="m in AllMissions"
                         :key="m"
@@ -161,8 +176,9 @@ const toggleFissure = fissure => {
                 </div>
             </div>
             <div>
-                <a>Fissures</a>
+                <a>Fissures <span v-if="Display.SelectedFissures.length > 0">({{ Display.SelectedFissures.length }})</span></a>
                 <div class="Popup">
+                    <a @click="Display.SelectedFissures = []">All</a>
                     <a
                         v-for="f in AllFissures"
                         :key="f"
@@ -189,9 +205,9 @@ const toggleFissure = fissure => {
         </div>
     </div>
 
-    <!-- ===== table mode ===== -->
+    <!-- ===== matrix mode ===== -->
 
-    <div v-if="Display.Mode === 'table'">
+    <div v-if="Display.Mode === 'matrix'">
         <table class="VoidFissureTable">
             <tbody>
                 <tr>
@@ -214,11 +230,30 @@ const toggleFissure = fissure => {
             </tbody>
         </table>
     </div>
+
+    <!-- ===== table mode ===== -->
+
+     <div v-if="Display.Mode === 'table'">
+        <table class="VoidFissureTable">
+            <tbody>
+                <tr>
+                    <td>Location</td>
+                    <td>Faction</td>
+                    <td>Mission</td>
+                    <td>Fissure</td>
+                    <td>Time</td>
+                </tr>
+                <tr v-for="m in FilteredComputedVoidFissures">
+                    <td>{{ m.Location }}</td>
+                    <td>{{ m.FactionName }}</td>
+                    <td>{{ m.MissionName }}</td>
+                    <td>{{ m.FissureName }}</td>
+                    <td><VoidFissureClock :MissionData="m"/></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </template>
-
-
-
-
 
 <style scoped>
 .VoidFissureGridBox{
@@ -289,6 +324,7 @@ const toggleFissure = fissure => {
     right: 0px;
     width: 200px;
     border: 1px solid #555;
+    z-index: 100;
 }
 .Popup a{
     display: block;
