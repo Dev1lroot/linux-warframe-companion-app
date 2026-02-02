@@ -4,6 +4,8 @@
 	const props = defineProps({
 		MissionData: Object
 	});
+
+	const RateVoidFissure = inject('RateVoidFissure');
     
     props.MissionData.Score = 0; //RateVoidFissure(props.MissionData);
 
@@ -53,30 +55,17 @@
 </script>
 
 <template>
-    <div class="VoidFissureCard">
-        <img class="VoidFissureCard-FissureIcon" :src="`/assets/fissures/${MissionData.FissureCode}.svg`"/>
+    <div class="VoidFissureData">
         <div>
-            <h3>{{ MissionData.MissionName }} | {{ MissionData.FactionName }}</h3>
-            <p><b>{{ MissionData.FissureName }} Fissure</b></p>
-            <p>{{ MissionData.Location }}</p>
-            <p>{{ getMissionTimeStatus(MissionData) }}</p>
-        </div>
-        <div>
-
+            <h3>{{ MissionData.Location }}</h3>
+			<p>{{ MissionData.FissureType }} | {{ getMissionTimeStatus(MissionData) }}</p>
         </div>
     </div>
 </template>
 
 <style scoped>
-.VoidFissureCard{
-    /* border: 1px solid #ccc; */
-    background-color: #FFFFFF10;
-    border-radius: 10px;
-    padding: 8px;
-    display: flex;
-    width: 100%;
-    flex-grow: 1;
-    gap: 8px;
+.VoidFissureData{
+    margin: 4px 0px;
 }
 .VoidFissureCard-FissureIcon{
     max-height: 90px;
@@ -84,10 +73,10 @@
     filter: invert();
     max-width: 90px !important;
 }
-.VoidFissureCard p, .VoidFissureCard b{
+.VoidFissureData p, .VoidFissureData b{
     color: #FFFFFFAA;
 }
-.VoidFissureCard h3{
+.VoidFissureData h3{
     font-size: 17px;
 } 
 </style>

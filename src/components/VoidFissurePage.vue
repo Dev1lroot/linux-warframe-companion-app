@@ -1,0 +1,301 @@
+<script setup>
+import { computed, reactive } from 'vue'
+import VoidFissureCard from './VoidFissureCard.vue'
+import VoidFissureData from './VoidFissureData.vue'
+
+const props = defineProps({
+    WorldState: Object,
+    Locale: Object,
+    Title: String
+})
+
+/* ---------- normalize data ---------- */
+
+const ComputedActiveMissions = computed(() => {
+    if (!props.WorldState?.ActiveMissions) return []
+
+    return props.WorldState.ActiveMissions.map(storm => {
+        const isHard = !!storm?.Hard
+
+        return {
+            ...storm,
+            Location: props.Locale?.solNodes?.[storm.Node]?.value || storm.Node,
+            FactionName: props.Locale?.solNodes?.[storm.Node]?.enemy || 'Unknown',
+            MissionName: props.Locale?.missionTypes?.[storm.MissionType]?.value || storm.MissionType,
+            FissureName: props.Locale?.fissureModifiers?.[storm.Modifier]?.value || storm.Modifier,
+            FissureCode: storm.Modifier,
+            FissureType: isHard ? 'Steel Path' : 'Normal',
+        }
+    })
+})
+
+const ComputedVoidStorms = computed(() => {
+    if (!props.WorldState?.VoidStorms) return []
+
+    return props.WorldState.VoidStorms.map(storm => ({
+        ...storm,
+        Location: props.Locale?.solNodes?.[storm.Node]?.value || storm.Node,
+        FactionName: props.Locale?.solNodes?.[storm.Node]?.enemy || 'Unknown',
+        MissionName: props.Locale?.solNodes?.[storm.Node]?.type || 'Unknown',
+        FissureName: props.Locale?.fissureModifiers?.[storm.ActiveMissionTier]?.value || storm.ActiveMissionTier,
+        FissureCode: storm.ActiveMissionTier,
+        FissureType: 'Railjack',
+    }))
+})
+
+const ComputedVoidFissures = computed(() => [
+    ...ComputedActiveMissions.value,
+    ...ComputedVoidStorms.value
+])
+
+/* ---------- UI state ---------- */
+
+const Display = reactive({
+    Mode: 'table',
+    Modes: ['cards', 'table'],
+    SelectedMissions: [],
+    SelectedFissures: [],
+})
+
+/* ---------- precomputed axes for selectors ---------- */
+
+const AllMissions = computed(() => {
+    const set = new Set()
+    for (const f of ComputedVoidFissures.value) {
+        set.add(f.MissionName)
+    }
+    return [...set].sort()
+})
+
+const AllFissures = computed(() => {
+    const set = new Set()
+    for (const f of ComputedVoidFissures.value) {
+        set.add(f.FissureName)
+    }
+    return [...set].sort()
+})
+
+/* ---------- filtered computed for display ---------- */
+
+const FilteredComputedVoidFissures = computed(() =>
+    ComputedVoidFissures.value.filter(f =>
+        (!Display.SelectedMissions.length || Display.SelectedMissions.includes(f.MissionName)) &&
+        (!Display.SelectedFissures.length || Display.SelectedFissures.includes(f.FissureName))
+    )
+)
+
+/* ---------- indexed map ---------- */
+
+const fissureMap = computed(() => {
+    const map = Object.create(null)
+    for (const f of FilteredComputedVoidFissures.value) {
+        map[f.MissionName] ??= Object.create(null)
+        map[f.MissionName][f.FissureName] = f
+    }
+    return map
+})
+
+/* ---------- axes for table (filtered) ---------- */
+
+const missions = computed(() => Object.keys(fissureMap.value).sort())
+
+const fissures = computed(() => {
+    const set = new Set()
+    for (const m in fissureMap.value) {
+        for (const f in fissureMap.value[m]) {
+            set.add(f)
+        }
+    }
+    return [...set].sort()
+})
+
+/* ---------- cell helpers ---------- */
+
+const cellData = (mission, fissure) =>
+    fissureMap.value[mission]?.[fissure] ?? null
+
+/* ---------- multiselect ---------- */
+
+const toggleMission = mission => {
+    const i = Display.SelectedMissions.indexOf(mission)
+    i === -1
+        ? Display.SelectedMissions.push(mission)
+        : Display.SelectedMissions.splice(i, 1)
+}
+
+const toggleFissure = fissure => {
+    const i = Display.SelectedFissures.indexOf(fissure)
+    i === -1
+        ? Display.SelectedFissures.push(fissure)
+        : Display.SelectedFissures.splice(i, 1)
+}
+</script>
+
+<template>
+    <div class="ControlPanel">
+        <nav>
+            <div>
+                <a>View</a>
+                <div class="Popup">
+                    <a
+                        v-for="option in Display.Modes"
+                        :key="option"
+                        @click="Display.Mode = option"
+                        :class="{ selected: (Display.Mode == option)}"
+                    >
+                        {{ option }}
+                    </a>
+                </div>
+            </div>
+            <div>
+                <a>Missions</a>
+                <div class="Popup">
+                    <a
+                        v-for="m in AllMissions"
+                        :key="m"
+                        :class="{ selected: Display.SelectedMissions.includes(m) }"
+                        @click="toggleMission(m)"
+                    >
+                        {{ m }}
+                    </a>
+                </div>
+            </div>
+            <div>
+                <a>Fissures</a>
+                <div class="Popup">
+                    <a
+                        v-for="f in AllFissures"
+                        :key="f"
+                        :class="{ selected: Display.SelectedFissures.includes(f) }"
+                        @click="toggleFissure(f)"
+                    >
+                        {{ f }}
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- ===== cards mode ===== -->
+
+    <div v-if="Display.Mode === 'cards'">
+        <div class="VoidFissureGridBox">
+            <div v-for="storm in FilteredComputedVoidFissures" :key="storm.Node + storm.FissureCode + storm.FissureType">
+                <VoidFissureCard
+                    :MissionData="storm"
+                    :Locale="Locale"
+                />
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== table mode ===== -->
+
+    <div v-if="Display.Mode === 'table'">
+        <table class="VoidFissureTable">
+            <tbody>
+                <tr>
+                    <td>Mission / Fissure</td>
+                    <td v-for="f in fissures" :key="f">
+                        {{ f }}
+                    </td>
+                </tr>
+
+                <tr v-for="m in missions" :key="m">
+                    <td>{{ m }}</td>
+
+                    <td v-for="f in fissures" :key="f">
+                        <VoidFissureData
+                            v-if="cellData(m, f)"
+                            :MissionData="cellData(m, f)"
+                        />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</template>
+
+
+
+
+
+<style scoped>
+.VoidFissureGridBox{
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 10px;
+}
+.VoidFissureTitle{
+	margin-top: 20px;
+	margin-bottom: 10px;
+}
+.VoidFissureTable{
+    width: 100%;
+    border-collapse: collapse;
+}
+.VoidFissureTable tr:nth-child(2n){
+    background-color: #FFFFFF10;
+}
+.VoidFissureTable td{
+    padding-left: 10px;
+    border-left: 1px solid #FFFFFF20;
+}
+.VoidFissureTable td:first-child{
+    border-left: none;
+    padding: 0px;
+    text-align: center;
+    font-weight: bolder;
+}
+.VoidFissureTable tr:first-child td{
+    font-weight: bolder;
+    border-left: none;
+    text-align: center;
+}
+.multiselect, .subnav{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.multiselect a, .subnav a{
+    cursor: pointer;
+    padding: 10px;
+    background-color: #FFFFFF10;
+    display: block;
+}
+.multiselect a.selected{
+    background-color: #FFFFFF90;
+}
+.disabled {
+    opacity: 0.3;
+}
+.ControlPanel{
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    width: auto;
+}
+.ControlPanel .Popup{
+    display: none;
+}
+.ControlPanel > nav > div{
+    position: relative;
+}
+.ControlPanel > nav > div:hover .Popup{
+    display: block;
+    background-color: #222;
+    position: absolute;
+    top: 32px;
+    right: 0px;
+    width: 200px;
+    border: 1px solid #555;
+}
+.Popup a{
+    display: block;
+    width: 100%;
+    border-left: 3px solid transparent;
+}
+.Popup a.selected{
+    border-left: 3px solid orange;
+}
+</style>
